@@ -5,9 +5,11 @@ export const  AppContext = createContext()
 
 const AppcontextProvider = (props) =>{
 
+  const currencySymbol = '$'
 
   const value = {
-    doctors
+    doctors,
+    currencySymbol
   }
   return(
     <AppContext.Provider value={value}>
