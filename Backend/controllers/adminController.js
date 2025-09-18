@@ -10,8 +10,9 @@ const addDoctors = async (req,res) => {
   try {
     const{name, email, password, image, speciality, degree, experience, about, fees, address } = req.body
     const imageFile = req.file
+    
 
-    if(!name || !email || !password || !image || !speciality || !degree || !experience || !about || !fees || !address){
+    if(!name || !email || !password  || !speciality || !degree || !experience || !about || !fees || !address){
       return res.json({success:false, message:'Missing Details'})
     }
 
@@ -34,7 +35,7 @@ const addDoctors = async (req,res) => {
     const doctorData = {
       name,
       email,
-      password:hashedPassword,
+      password:hashedPassword, 
       image:imageUrl,
       speciality,
       degree,
@@ -48,11 +49,11 @@ const addDoctors = async (req,res) => {
     const newDoctor = new doctorModel(doctorData)
     await newDoctor.save()
 
-    return({success:true,message:'Doctor added'})
+    return res.json({success:true,message:'Doctor added'})
     
   } catch (error) {
     console.log(error);
-    return({success:false,message:error.message})
+    return res.json({success:false,message:error.message})
   }
 }
 
@@ -62,13 +63,23 @@ const loginAdmin = async (req,res) => {
   try {
     const {email, password} = req.body
 
-    if(email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD){
+    // if(email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD){
 
-      const token = jwt.sign(email+password,process.env.JWT_SECRET)
-      res.json({success:true,token})
+    //   const token = jwt.sign(email+password,process.env.JWT_SECRET)
+    //   res.json({success:true,token})
 
-    }else{
-      res.json({success:false,message:"Invalid credential"})
+    // }else{
+    //   res.json({success:false,message:"Invalid credential"})
+    // }
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      const token = jwt.sign(
+        { email }, // payload should be an object
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" } // optional expiry
+      );
+      return res.json({ success: true, token });
+    } else {
+      return res.json({ success: false, message: "Invalid credentials" });
     }
     
   } catch (error) {
