@@ -55,11 +55,22 @@ const Appointment = () => {
       while (currentDate < endTime) {
         let  formattedTime =currentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
 
-        // add  slot to array
-        timeSlot.push({
-          datetime: new Date(currentDate),
-          time: formattedTime
-        })
+        let day = currentDate.getDate()
+        let month =currentDate.getMonth()+1
+        let year = currentDate.getFullYear()
+
+        const slotDate = day +'_'+month+"_"+year
+        const slotTime = formattedTime
+
+        const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false :true
+
+        if (isSlotAvailable) {
+          // add  slot to array
+          timeSlot.push({
+            datetime: new Date(currentDate),
+            time: formattedTime
+          })
+        }
 
         // Increment current time by 30 minitus
         currentDate.setMinutes(currentDate.getMinutes()+ 30)
