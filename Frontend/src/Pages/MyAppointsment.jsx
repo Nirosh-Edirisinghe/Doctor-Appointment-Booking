@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 
 const MyAppointsment = () => {
 
-  const {backendUrl,token} = useContext(AppContext)
+  const {backendUrl,token,getDoctors} = useContext(AppContext)
   const [appoinments, setAppoinments] = useState([])
 
   const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -28,6 +28,23 @@ const MyAppointsment = () => {
       console.log(error);
       toast.error(error.message)
       
+    }
+  }
+
+  const cancelAppoinment = async (appoinmentId)  => {
+    try {
+      const {data} = await axios.post(backendUrl+'/api/user/cancel-appoinment',{appoinmentId},{headers:{token}})
+      if(data.success){
+        toast.success(data.message)
+        getUserAppoinments()
+        getDoctors()
+      }else{
+        toast.error(data.message)
+      }
+      
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message)
     }
   }
 
@@ -56,8 +73,12 @@ const MyAppointsment = () => {
             </div>
             <div></div>
             <div className='flex flex-col gap-2 justify-end'>
-              <button className='text-sm  text-stone-500 text-center sm:min-w-48 py-2 border  rounded hover:bg-[var(--color-primary)] hover:text-white transition-all duration-300'>Pay Online</button>
-              <button className='text-sm  text-stone-500 text-center sm:min-w-48 py-2 border  rounded hover:bg-red-500 hover:text-white transition-all duration-300'>Cansel appoinment</button>
+              {!item.cancelled && <button className='text-sm  text-stone-500 text-center sm:min-w-48 py-2 border  rounded hover:bg-[var(--color-primary)] hover:text-white transition-all duration-300'>Pay Online</button> }
+              
+              {!item.cancelled && <button onClick={()=>cancelAppoinment(item._id)} className='text-sm  text-stone-500 text-center sm:min-w-48 py-2 border  rounded hover:bg-red-500 hover:text-white transition-all duration-300'>Cansel appoinment</button>}
+
+              {item.cancelled && <button className='sm:min-w-48 py-2 border border-red-500 rounded  text-red-500'>Appoinment canceled</button>}
+              
             </div>
           </div>
         ))}
