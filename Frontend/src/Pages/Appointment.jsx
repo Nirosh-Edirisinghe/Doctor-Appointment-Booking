@@ -1,13 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 import RelatedDoctors from '../Components/RelatedDoctors'
+import { toast } from 'react-toastify'
+import axios from 'axios'
 
 const Appointment = () => {
 
   const {docId} = useParams()
-  const {doctors,currencySymbol} = useContext(AppContext)
+  const {doctors,currencySymbol,backendUrl,token,getDoctors} = useContext(AppContext)
+  const navigate = useNavigate()
   const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
   const [docInfo, setDocInfo] = useState(null)
@@ -63,6 +66,35 @@ const Appointment = () => {
       }
 
       setDocSlot(prev => ([...prev, timeSlot]))
+    }
+  }
+
+  const bookAppoinment = async () =>{
+    if(!token){
+      toast.warn('Login to book appoinment.')
+      return navigate('/login')
+    }
+    try {
+      const date = docSlot[slotIndex][0].datetime
+
+      let day = date.getDate()
+      let month = date.getMonth()+1
+      let year = date.getFullYear()
+
+      const slotDate = day +'_'+month+"_"+year
+      const {data} = await axios.post(backendUrl+'/api/user/book-appointment',{docId,slotDate,slotTime},{headers:{token}})
+
+      if(data.success){
+        toast.success(data.message)
+        getDoctors()
+        navigate('/my-appointments')
+      }else{
+        toast.error(data.message)
+      }
+      
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message)
     }
   }
 
@@ -131,7 +163,7 @@ const Appointment = () => {
             ))
           }
         </div>
-        <button className='bg-[var(--color-primary)] text-white text-sm font-light px-14 py-3 rounded-full my-6'>Book an Appoinment</button>
+        <button onClick={bookAppoinment} className='bg-[var(--color-primary)] text-white text-sm font-light px-14 py-3 rounded-full my-6'>Book an Appoinment</button>
       </div>
 
       {/* list related doctors */}

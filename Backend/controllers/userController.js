@@ -3,6 +3,9 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import userModel from '../model/userModel.js'
 import { v2 as cloudinary} from 'cloudinary'
+import doctorModel from '../model/doctorsModel.js'
+import { json } from 'express'
+import appointmentModel from '../model/appoinmentModel.js'
 
 // api to register user
 
@@ -71,7 +74,7 @@ const loginUser = async (req, res) => {
   }
 }
 
-// api to get ser profile
+// api to get set profile
 const getProfile = async (req,res) => {
   try {
     // const {userId} = req.body
@@ -115,4 +118,59 @@ const updateProfile = async (req,res) => {
   }
 }
 
-export { registerUser, loginUser, getProfile, updateProfile}
+// api for book appoinment
+const bookAppointment = async (req,res) => {
+  try {
+    const userId = req.user.id;
+    const {docId,slotDate,slotTime} = req.body
+
+    const docData = await doctorModel.findById(docId).select('-password')
+
+    if(!docData.available){
+      return res,json({success:true, message:'doctor not available'})
+    }
+
+    let slots_booked = docData.slots_booked
+
+    // checking  for slot availbale
+    if (slots_booked[slotDate]){
+      if(slots_booked[slotDate].includes(slotTime)){
+        return res.json({success:false,message:'Slot not available'})
+      }else{
+        slots_booked[slotDate].push(slotTime)
+      }
+    }else{
+      slots_booked[slotDate] = []
+      slots_booked[slotDate].push(slotTime)
+    }
+
+    const userData = await  userModel.findById(userId).select('-password')
+
+    delete docData.slots_booked
+
+    const appoinmentData = {
+      userId,
+      docId,
+      userData,
+      docData,
+      amount:docData.fees,
+      slotTime,
+      slotDate,
+      date:Date.now()
+    }
+
+    const newAppointment = new appointmentModel(appoinmentData)
+    await newAppointment.save()
+
+    // save new slots  data in docData
+    await doctorModel.findByIdAndUpdate(docId,{slots_booked})
+
+    res.json({success:true,message:'Apponment Bookekd'})
+    
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message })
+  }
+}
+
+export { registerUser, loginUser, getProfile, updateProfile,bookAppointment}
